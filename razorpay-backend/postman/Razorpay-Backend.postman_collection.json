@@ -1,0 +1,72 @@
+{
+  "info": {
+    "_postman_id": "bd719fd3-60d7-4aa3-9953-43ae54b0f2c7",
+    "name": "Razorpay Backend Workshop",
+    "description": "Requests for the Razorpay order, payment verification, and raw-body webhook endpoints. Set baseUrl and replace placeholder signatures with locally generated HMAC SHA-256 hex signatures.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5001" },
+    { "key": "orderId", "value": "order_test123" },
+    { "key": "paymentId", "value": "pay_test123" },
+    { "key": "paymentSignature", "value": "replace_with_payment_hmac_hex" },
+    { "key": "webhookSignature", "value": "replace_with_webhook_hmac_hex" }
+  ],
+  "item": [
+    {
+      "name": "Health check",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/health"
+      }
+    },
+    {
+      "name": "Create order (50000 paise = INR 500)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"amount\": 50000,\n  \"currency\": \"INR\"\n}"
+        },
+        "url": "{{baseUrl}}/api/payment/create-order"
+      }
+    },
+    {
+      "name": "Reject invalid amount",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"amount\": 0\n}" },
+        "url": "{{baseUrl}}/api/payment/create-order"
+      }
+    },
+    {
+      "name": "Verify payment signature",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"razorpay_order_id\": \"{{orderId}}\",\n  \"razorpay_payment_id\": \"{{paymentId}}\",\n  \"razorpay_signature\": \"{{paymentSignature}}\"\n}"
+        },
+        "url": "{{baseUrl}}/api/payment/verify"
+      }
+    },
+    {
+      "name": "Verify webhook signature (payment.captured)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "x-razorpay-signature", "value": "{{webhookSignature}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"event\": \"payment.captured\",\n  \"payload\": {\n    \"payment\": { \"entity\": { \"id\": \"pay_test123\" } }\n  }\n}"
+        },
+        "url": "{{baseUrl}}/api/payment/webhook"
+      }
+    }
+  ]
+}
